@@ -1,2 +1,377 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+struct NODE
+{
+	int LEFT, RIGHT;
+    int INFO;
+    NODE* LLINK;
+    NODE* RLINK;
+};
+
+struct khoang
+{
+	int info;
+	int a;
+	int b;
+};
+
+struct ham
+{
+	khoang *k;
+	int sl;
+};
+
+int khoangRandom(int min,int max);
+void nhap(khoang doan[], int m, int n);
+void xuat(khoang doan[], int m);
+void postoder(NODE *temp);
+khoang *mangthaythe(khoang doan[], int m);
+ham catkhoangsua(khoang doan[], int m);
+void taocayvaduyetcay(khoang doan[], int m);
+khoang *sapxeptrai(khoang doan[], int m);
+ham toithieutrai(khoang doan[], int m);
+ham sapxepphai(khoang doan[], int m);
+ham tapsinh(khoang doan[], int m);
+
+int main()
+{
+	int m =10;
+	int n =10;
+	
+	srand((unsigned int)time(NULL));
+	khoang doan[10];
+	nhap(doan, m, n);
+	
+	printf("Ta co n = %d tap phan tu dinh gom {0,1,...,%d}\nSo tap la m = %d tap\n\n",n, n, m);
+	printf("Cac dinh ngau nhien duoc lay trong tap dinh la:\n");
+	for (int i= 0; i < m; i++)
+	{
+		printf("%d ", doan[i].info);
+	}
+	printf("\n\nCac dinh duoc gan voi cac khoang chua dinh:\n");
+	xuat(doan, m);
+	
+	static khoang *the = mangthaythe(doan,m);
+
+	static khoang *xst = sapxeptrai(doan,m);
+	printf("\nSap xep tang dan theo diem cuoi ben trai:\n");
+	xuat(xst, m);
+	
+	static ham ttt = toithieutrai(xst, m);
+	printf("\nToi theu trai (loai bo cac diem cuoi ben trai giong nhau):\n");
+	xuat(ttt.k, ttt.sl);
+	
+	static ham sxp = sapxepphai(ttt.k, ttt.sl);
+	printf("\nSap xep phai (tu cac khoang da duoc sap xep trai):\n");
+	xuat(sxp.k, sxp.sl);
+	
+	static ham ts = tapsinh(sxp.k,sxp.sl);
+	printf("\nMinimum_generating_family (tap sinh tu sap xep phai):\n");
+	xuat(ts.k, ts.sl);
+	
+	static ham sua = catkhoangsua(ttt.k,ttt.sl);
+	printf("\nGiam cac khoang xau!\n");
+	printf("\nCac dinh con lai sau khi giam cac khoang xau la:\n");
+	for (int i= 0; i < sua.sl; i++)
+	{
+		printf("%d ", sua.k[i].info);
+	}
+	printf("\n");
+	printf("\nGiam khoang xau theo thuat toan cua Franzblau va Kleitman:\n");
+	xuat(sua.k,	sua.sl);
+	
+	taocayvaduyetcay(sua.k, sua.sl);
+	
+	return 0;
+}
+
+ham sapxepphai(khoang doan[], int m)
+{
+	ham h;
+	static khoang p[10];
+	int a;
+	int k =0;
+	for (int i =0; i<m-1; i++)
+	{
+		if (doan[i].b >= doan[i+1].b)
+		{
+			i++;
+		}
+		a = k++;
+		p[a].a = doan[i].a;
+		p[a].info = p[a].a;
+		p[a].b = doan[i].b;
+	}
+	if (doan[m-1].b > doan[m-2].b)
+	{
+		a = k++;
+		p[a].a = doan[m-1].a;
+		p[a].info = p[a].a;
+		p[a].b = doan[m-1].b;
+	}
+	h.k = p;
+	h.sl = a+1;
+	return h;
+}
+
+ham tapsinh(khoang doan[], int m)
+{
+	ham h;
+	static khoang cat[10];
+	for (int i =0; i< m-1; i++)
+	{
+		cat[i].a = doan[i+1].a;
+		cat[i].info = cat[i].a;
+		cat[i].b = doan[i].b;
+	}
+	
+	static khoang sua[10];
+	int a;
+	int k=0;
+	for (int i =0; i<m; i++)
+	{
+		if (cat[i].b > cat[i-1].b && cat[i].a < cat[i].b)
+		{
+			a = k++;
+			sua[a].info = cat[i].info;
+			sua[a].a = cat[i].a;
+			sua[a].b = cat[i].b;
+		}
+		
+	}
+	h.k = sua;
+	h.sl = a+1;
+	return h;
+}
+
+khoang *sapxeptrai(khoang doan[], int m)
+{
+	khoang temp;
+	for (int i = 0; i < m-1; i++)
+	{
+			for (int j = 0; j < m-i-1; j++)
+			{
+				if (doan[j].a >= doan[j+1].a)
+				{
+					temp = doan[j];
+					doan[j] = doan[j+1];
+					doan[j+1] = temp;
+				}
+			}
+	}
+	return doan;
+}
+
+ham toithieutrai(khoang doan[], int m)
+{
+	static ham h;
+	static khoang trai[10];
+	int i =0;
+	int k=0;
+	int a;
+	int max = doan[m-1].a;
+	while (doan[i].a >= 0 && doan[i].a <= 10)
+	{
+		a = k++;
+		trai[a].info = doan[i].info;
+		trai[a].a = doan[i].a;
+		trai[a].b = doan[i].b;
+		while (doan[i].a == doan[i+1].a)
+		{
+			i++;
+		}
+		
+		if (trai[a].a == max)
+		{
+			break;
+		}
+		i++;
+	}
+	h.k = trai;
+	h.sl = a+1;
+	return h;
+}
+
+int khoangRandom(int min,int max)
+{
+    return min + (int)(rand()*(max-min+1.0)/(1.0+RAND_MAX));
+}
+
+void nhap(khoang doan[], int m, int n)
+{
+	doan[0].info = 0; doan[0].a= 0; doan[0].b = 4;
+	for (int i = 1; i < m; i++)
+	{
+		nhapa:
+		{
+			doan[i].a = khoangRandom(0,n-1);
+			doan[i].info = doan[i].a;
+		}
+			
+		if(doan[i].a >= n-1)
+		{
+			goto nhapa;
+		}
+		nhapb:
+		{
+			doan[i].b = khoangRandom(doan[i].a +1,doan[i].a + 3);
+		}
+		if (doan[i].b > n)
+		{
+			goto nhapb;
+		}
+	}
+}
+
+void xuat(khoang doan[], int m)
+{
+	for (int i = 0; i < m; i++)
+	{
+		printf("%d=[%d..%d)\n",doan[i].info, doan[i].a, doan[i].b);
+	}
+}
+
+void postoder(NODE *temp)
+{
+	if (temp != NULL)
+	{
+	    postoder(temp->LLINK);
+		postoder(temp->RLINK);
+		printf("%d=[%d..%d)  ", temp->INFO, temp->LEFT, temp->RIGHT);
+	}
+}
+
+khoang *mangthaythe(khoang doan[], int m)
+{
+	static khoang mangthe[10];
+	for (int i = 0; i < m; i++)
+	{
+		mangthe[i].info = doan[i].info;
+		mangthe[i].a = doan[i].a;
+		mangthe[i].b = doan[i].b;
+	}
+	return mangthe;
+}
+
+ham catkhoangsua(khoang doan[], int m)
+{
+	ham h;
+	static khoang cat[10];
+	for (int i =0; i< m-1; i++)
+	{
+		cat[i].a = doan[i+1].a;
+		cat[i].info = cat[i].a;
+		cat[i].b = doan[i].b;
+	}
+	
+	static khoang sua[10];
+	int a;
+	int k=0;
+	for (int i =0; i<m; i++)
+	{
+		if (cat[i].a >= cat[i-1].b && cat[i].a < cat[i].b)
+		{
+			a = k++;
+			sua[a].info = cat[i].info;
+			sua[a].a = cat[i].a;
+			sua[a].b = cat[i].b;
+		}
+		
+	}
+	h.k = sua;
+	h.sl = a+1;
+	return h;
+}
+
+void taocayvaduyetcay(khoang doan[], int m)
+{
+	NODE *nodeA = (NODE*)malloc(sizeof(NODE));//1
+	NODE *nodeB = (NODE*)malloc(sizeof(NODE));//2
+	NODE *nodeC = (NODE*)malloc(sizeof(NODE));//3
+	NODE *nodeD = (NODE*)malloc(sizeof(NODE));//4
+	NODE *nodeE = (NODE*)malloc(sizeof(NODE));//5
+	NODE *nodeF = (NODE*)malloc(sizeof(NODE));//6
+	NODE *nodeG = (NODE*)malloc(sizeof(NODE));//7
+	NODE *nodeH = (NODE*)malloc(sizeof(NODE));//8
+	NODE *nodeI = (NODE*)malloc(sizeof(NODE));//9
+	
+	printf("\nTao cay!\n\nCay co %d node!\n",m);
+	
+	if(m==1)
+	{
+		nodeA->INFO = doan[0].info; nodeA->LEFT = doan[0].a; nodeA->RIGHT = doan[0].b; nodeA->LLINK = NULL; nodeA->RLINK = NULL;
+	}
+	else if (m==2)
+	{
+		nodeA->INFO = doan[1].info; nodeA->LEFT = doan[1].a; nodeA->RIGHT = doan[1].b; nodeA->RLINK = NULL; nodeA->LLINK = nodeB;
+		nodeB->INFO = doan[0].info; nodeB->LEFT = doan[0].a; nodeB->RIGHT = doan[0].b; nodeB->LLINK = NULL; nodeB->RLINK = NULL;
+	}
+	else if (m==3)
+	{
+		nodeA->INFO = doan[1].info; nodeA->LEFT = doan[1].a; nodeA->RIGHT = doan[1].b; nodeA->LLINK = nodeB; nodeA->RLINK = nodeC;
+		nodeB->INFO = doan[0].info; nodeB->LEFT = doan[0].a; nodeB->RIGHT = doan[0].b; nodeB->LLINK = NULL; nodeB->RLINK = NULL;
+		nodeC->INFO = doan[2].info; nodeC->LEFT = doan[2].a; nodeC->RIGHT = doan[2].b; nodeC->LLINK = NULL; nodeC->RLINK = NULL;
+	}
+	else if (m==4)
+	{
+		nodeA->INFO = doan[1].info; nodeA->LEFT = doan[1].a; nodeA->RIGHT = doan[1].b; nodeA->LLINK = nodeB; nodeA->RLINK = nodeC;
+		nodeB->INFO = doan[0].info; nodeB->LEFT = doan[0].a; nodeB->RIGHT = doan[0].b; nodeB->LLINK = NULL; nodeB->RLINK = NULL;
+		nodeC->INFO = doan[2].info; nodeC->LEFT = doan[2].a; nodeC->RIGHT = doan[2].b; nodeC->LLINK = NULL; nodeC->RLINK = nodeD;
+		nodeD->INFO = doan[3].info; nodeD->LEFT = doan[3].a; nodeD->RIGHT = doan[3].b; nodeD->LLINK = NULL; nodeD->RLINK = NULL;
+	}
+	else if (m==5)
+	{
+		nodeA->INFO = doan[2].info; nodeA->LEFT = doan[2].a; nodeA->RIGHT = doan[2].b; nodeA->LLINK = nodeB; nodeA->RLINK = nodeC;
+		nodeB->INFO = doan[1].info; nodeB->LEFT = doan[1].a; nodeB->RIGHT = doan[1].b; nodeB->LLINK = nodeD; nodeB->RLINK = NULL;
+		nodeC->INFO = doan[3].info; nodeC->LEFT = doan[3].a; nodeC->RIGHT = doan[3].b; nodeC->LLINK = NULL; nodeC->RLINK = nodeE;
+		nodeD->INFO = doan[3].info; nodeD->LEFT = doan[3].a; nodeD->RIGHT = doan[3].b; nodeD->LLINK = NULL; nodeD->RLINK = NULL;
+		nodeE->INFO = doan[4].info; nodeE->LEFT = doan[4].a; nodeE->RIGHT = doan[4].b; nodeE->LLINK = NULL; nodeE->RLINK = NULL;
+	}
+	else if (m==6)
+	{
+		nodeA->INFO = doan[2].info; nodeA->LEFT = doan[2].a; nodeA->RIGHT = doan[2].b; nodeA->LLINK = nodeB; nodeA->RLINK = nodeC;
+		nodeB->INFO = doan[1].info; nodeB->LEFT = doan[1].a; nodeB->RIGHT = doan[1].b; nodeB->LLINK = nodeD; nodeB->RLINK = NULL;
+		nodeC->INFO = doan[4].info; nodeC->LEFT = doan[4].a; nodeC->RIGHT = doan[4].b; nodeC->LLINK = nodeE; nodeC->RLINK = nodeF;
+		nodeD->INFO = doan[0].info; nodeD->LEFT = doan[0].a; nodeD->RIGHT = doan[0].b; nodeD->LLINK = NULL; nodeD->RLINK = NULL;
+		nodeE->INFO = doan[3].info; nodeE->LEFT = doan[3].a; nodeE->RIGHT = doan[3].b; nodeE->LLINK = NULL; nodeE->RLINK = NULL;
+		nodeF->INFO = doan[5].info; nodeF->LEFT = doan[5].a; nodeF->RIGHT = doan[5].b; nodeF->LLINK = NULL; nodeF->RLINK = NULL;
+	}
+	else if (m==7)
+	{
+		nodeA->INFO = doan[3].info; nodeA->LEFT = doan[3].a; nodeA->RIGHT = doan[3].b; nodeA->LLINK = nodeB; nodeA->RLINK = nodeC;
+		nodeB->INFO = doan[1].info; nodeB->LEFT = doan[1].a; nodeB->RIGHT = doan[1].b; nodeB->LLINK = nodeD; nodeB->RLINK = nodeE;
+		nodeC->INFO = doan[6].info; nodeC->LEFT = doan[6].a; nodeC->RIGHT = doan[6].b; nodeC->LLINK = nodeF; nodeC->RLINK = nodeG;
+		nodeD->INFO = doan[0].info; nodeD->LEFT = doan[0].a; nodeD->RIGHT = doan[0].b; nodeD->LLINK = NULL; nodeD->RLINK = NULL;
+		nodeE->INFO = doan[2].info; nodeE->LEFT = doan[2].a; nodeE->RIGHT = doan[2].b; nodeE->LLINK = NULL; nodeE->RLINK = NULL;
+		nodeF->INFO = doan[4].info; nodeF->LEFT = doan[4].a; nodeF->RIGHT = doan[4].b; nodeF->LLINK = NULL; nodeF->RLINK = NULL;
+		nodeG->INFO = doan[6].info; nodeG->LEFT = doan[6].a; nodeG->RIGHT = doan[6].b; nodeG->LLINK = NULL; nodeG->RLINK = NULL;
+	}
+	else if (m==8)
+	{
+		nodeA->INFO = doan[3].info; nodeA->LEFT = doan[3].a; nodeA->RIGHT = doan[3].b; nodeA->LLINK = nodeB; nodeA->RLINK = nodeC;
+		nodeB->INFO = doan[1].info; nodeB->LEFT = doan[1].a; nodeB->RIGHT = doan[1].b; nodeB->LLINK = nodeD; nodeB->RLINK = nodeE;
+		nodeC->INFO = doan[5].info; nodeC->LEFT = doan[5].a; nodeC->RIGHT = doan[5].b; nodeC->LLINK = nodeF; nodeC->RLINK = nodeG;
+		nodeD->INFO = doan[0].info; nodeD->LEFT = doan[0].a; nodeD->RIGHT = doan[0].b; nodeD->LLINK = NULL; nodeD->RLINK = NULL;
+		nodeE->INFO = doan[2].info; nodeE->LEFT = doan[2].a; nodeE->RIGHT = doan[2].b; nodeE->LLINK = NULL; nodeE->RLINK = NULL;
+		nodeF->INFO = doan[4].info; nodeF->LEFT = doan[4].a; nodeF->RIGHT = doan[4].b; nodeF->LLINK = NULL; nodeF->RLINK = NULL;
+		nodeG->INFO = doan[6].info; nodeG->LEFT = doan[6].a; nodeG->RIGHT = doan[6].b; nodeG->LLINK = NULL; nodeG->RLINK = nodeH;
+		nodeH->INFO = doan[7].info; nodeH->LEFT = doan[7].a; nodeH->RIGHT = doan[7].b; nodeH->LLINK = NULL; nodeH->RLINK = NULL;
+	}
+	else if (m==9)
+	{
+		nodeA->INFO = doan[4].info; nodeA->LEFT = doan[4].a; nodeA->RIGHT = doan[4].b; nodeA->LLINK = nodeB; nodeA->RLINK = nodeC;
+		nodeB->INFO = doan[1].info; nodeB->LEFT = doan[1].a; nodeB->RIGHT = doan[1].b; nodeB->LLINK = nodeD; nodeB->RLINK = nodeE;
+		nodeC->INFO = doan[6].info; nodeC->LEFT = doan[6].a; nodeC->RIGHT = doan[6].b; nodeC->LLINK = nodeF; nodeC->RLINK = nodeG;
+		nodeD->INFO = doan[0].info; nodeD->LEFT = doan[0].a; nodeD->RIGHT = doan[0].b; nodeD->LLINK = NULL; nodeD->RLINK = NULL;
+		nodeE->INFO = doan[2].info; nodeE->LEFT = doan[2].a; nodeE->RIGHT = doan[2].b; nodeE->LLINK = NULL; nodeE->RLINK = nodeH;
+		nodeF->INFO = doan[5].info; nodeF->LEFT = doan[5].a; nodeF->RIGHT = doan[5].b; nodeF->LLINK = NULL; nodeF->RLINK = NULL;
+		nodeG->INFO = doan[7].info; nodeG->LEFT = doan[7].a; nodeG->RIGHT = doan[7].b; nodeG->LLINK = NULL; nodeG->RLINK = nodeI;
+		nodeH->INFO = doan[3].info; nodeH->LEFT = doan[3].a; nodeH->RIGHT = doan[3].b; nodeH->LLINK = NULL; nodeH->RLINK = NULL;
+		nodeI->INFO = doan[8].info; nodeI->LEFT = doan[8].a; nodeI->RIGHT = doan[8].b; nodeI->LLINK = NULL; nodeI->RLINK = NULL;
+	}
+	
+	printf("\nDuyet cay theo Postoder\n\nMaximum_irreduant_family:\n");
+	postoder(nodeA);
+}
